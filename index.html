@@ -49,7 +49,7 @@
                 </div>
             </div>
             
-            <!-- Controles (Panel y Carga) + Logo Derecho (Accede+) en línea recta -->
+            <!-- Controles (Panel, Carga y Logo Derecho Accede+) -->
             <div class="flex items-center gap-3 shrink-0">
                 <button onclick="toggleAdminPanel()" id="btnAdmin" class="bg-mimp-800 hover:bg-mimp-600 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow transition flex items-center gap-2 border border-white/10">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -78,16 +78,32 @@
     <!-- Contenido Principal -->
     <main class="max-w-7xl mx-auto px-6 py-6 space-y-6 flex-grow w-full">
 
-        <!-- PANEL DE ADMINISTRACIÓN -->
+        <!-- PANEL DE ADMINISTRACIÓN (Con listado de archivos y opción de eliminar bloques) -->
         <div id="panelAdmin" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hidden space-y-4">
             <div class="flex justify-between items-center border-b border-slate-100 pb-3">
                 <div class="flex items-center gap-2">
                     <div class="h-3 w-3 rounded-full bg-mimp-600"></div>
-                    <h2 class="text-base font-bold text-slate-900">Gestión de Archivos en la Nube</h2>
+                    <h2 class="text-base font-bold text-slate-900">Gestión de Archivos en el Repositorio Central</h2>
                 </div>
-                <span class="text-xs bg-mimp-50 text-mimp-700 font-bold px-3 py-1 rounded-full border border-mimp-100" id="contadorArchivosAdmin">Sincronizado con Google Sheets</span>
+                <span class="text-xs bg-mimp-50 text-mimp-700 font-bold px-3 py-1 rounded-full border border-mimp-100" id="contadorArchivosAdmin">0 archivos activos</span>
             </div>
-            <p class="text-xs text-slate-500">Los datos se almacenan automáticamente en el Google Sheet central de la institución, permitiendo que cualquier usuario los visualice en tiempo real desde cualquier computadora.</p>
+            <p class="text-xs text-slate-500">Aquí puedes ver los archivos Excel cargados en la nube. Si deseas quitar uno (por ejemplo, "correspondencia.xlsx"), haz clic en eliminar para depurar sus registros del Google Sheet y del buscador para todas las computadoras.</p>
+            
+            <div class="overflow-x-auto rounded-lg border border-slate-100 max-h-60">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead class="bg-slate-50 text-slate-700 uppercase font-semibold sticky top-0">
+                        <tr>
+                            <th class="p-3 border-b">Nombre del Archivo Excel</th>
+                            <th class="p-3 border-b">Estado en Nube</th>
+                            <th class="p-3 border-b">Registros Aportados</th>
+                            <th class="p-3 border-b text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaArchivosAdmin" class="divide-y divide-slate-100 text-slate-600 bg-white">
+                        <!-- Dinámico -->
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <!-- Barra de Búsqueda y Filtros -->
@@ -136,16 +152,17 @@
         Ministerio de la Mujer y Poblaciones Vulnerables (MIMP) — Oficina de Atención a la Ciudadanía y Gestión Documental
     </footer>
 
-    <!-- Lógica de Sincronización Automática con la Nube (Por Lotes) -->
+    <!-- Lógica de Sincronización y Administración Selectiva -->
     <script>
         const encabezadosFijos = [
-            "N° CAJA (CÓDIGO)", "Nº DE PAQUETE", "N° DE REGISTRO ARCHIVÍSTICO", "TOMO", 
+            "N° CAJA (CÓDIGO)", "Nº DE PAQUETE", "N° REGISTRO ARCHIVÍSTICO", "TOMO", 
             "RANGO INICIAL", "RANGO FINAL", "N° FOLIOS", "SERIE DOCUMENTAL", 
             "N° DE DOCUMENTO PRINCIPAL", "RAZON SOCIAL / NOMBRES Y APELLIDOS", 
             "DESCRIPCIÓN DOCUMENTAL", "FECHA EXTREMA", "OBSERVACIONES", "X1", "X2", "X3", "Archivo Origen"
         ];
 
         let datosGlobalesCache = [];
+        let historialArchivosCache = [];
 
         window.addEventListener('DOMContentLoaded', () => {
             inicializarEncabezados();
@@ -170,20 +187,50 @@
             panel.classList.toggle('hidden');
         }
 
-        // Descargar datos automáticamente de Google Sheets
+        // Descargar datos y lista de archivos desde Google Sheets
         async function cargarDatosDesdeNube() {
             try {
                 let response = await fetch(APPS_SCRIPT_URL);
                 let json = await response.json();
                 datosGlobalesCache = json.registros || [];
+                historialArchivosCache = json.archivos || [];
+                
                 renderizarTabla(datosGlobalesCache);
+                renderizarPanelAdmin(historialArchivosCache);
             } catch (e) {
                 console.error("Error al conectar con la nube", e);
                 document.getElementById('contadorResultados').innerText = "Error de conexión con la nube";
             }
         }
 
-        // Cargar nuevos Exceles y subirlos por lotes inteligentes a Google Sheets
+        // Eliminar un archivo específico de la nube y actualizar la vista global
+        async function eliminarArchivo(nombreArchivo) {
+            if (confirm(`¿Estás seguro de eliminar el archivo "${nombreArchivo}"? Se borrarán todos sus registros del Google Sheet central y del buscador para todas las computadoras.`)) {
+                const contadorDiv = document.getElementById('contadorResultados');
+                contadorDiv.innerHTML = `<span class="text-rose-600 font-bold animate-pulse">Eliminando archivo de la nube...</span>`;
+
+                try {
+                    let response = await fetch(APPS_SCRIPT_URL, {
+                        method: "POST",
+                        body: JSON.stringify({
+                            accion: "eliminar_archivo",
+                            nombreArchivo: nombreArchivo
+                        })
+                    });
+                    let resultado = await response.json();
+                    if (resultado.status === "success") {
+                        alert(`El archivo "${nombreArchivo}" fue eliminado correctamente.`);
+                        await cargarDatosDesdeNube();
+                    } else {
+                        throw new Error("No se pudo completar la eliminación en el servidor.");
+                    }
+                } catch (err) {
+                    alert("Error al eliminar el archivo: " + err);
+                }
+            }
+        }
+
+        // Sube nuevos archivos por lotes
         document.getElementById('inputFiles').addEventListener('change', async function(e) {
             const archivos = Array.from(e.target.files);
             if (archivos.length === 0) return;
@@ -206,7 +253,6 @@
                 return;
             }
 
-            // Subir en lotes de 2,000 filas para evitar bloqueos por tamaño de red
             const tamañoLote = 2000;
             let totalEnviados = 0;
 
@@ -238,7 +284,7 @@
 
             await cargarDatosDesdeNube();
             e.target.value = '';
-            alert(`¡Sincronización exitosa! Se han guardado ${totalEnviados} registros en la nube para todas las computadoras.`);
+            alert(`¡Sincronización exitosa! Se han guardado ${totalEnviados} registros en la nube disponibles para todas las computadoras.`);
         });
 
         function leerArchivoExcel(archivo) {
@@ -319,6 +365,36 @@
             } else {
                 contador.innerText = `Mostrando ${datos.length} registros sincronizados`;
             }
+        }
+
+        function renderizarPanelAdmin(archivos) {
+            const tbodyAdmin = document.getElementById('tablaArchivosAdmin');
+            const contadorAdmin = document.getElementById('contadorArchivosAdmin');
+            tbodyAdmin.innerHTML = '';
+
+            const total = archivos ? archivos.length : 0;
+            contadorAdmin.innerText = `${total} archivos activos`;
+
+            if (!archivos || total === 0) {
+                tbodyAdmin.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-slate-400">No hay archivos en el repositorio de la nube.</td></tr>`;
+                return;
+            }
+
+            archivos.forEach(archivo => {
+                let tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50";
+                tr.innerHTML = `
+                    <td class="p-3 font-semibold text-slate-800">${archivo.nombre}</td>
+                    <td class="p-3 text-emerald-600 font-medium">Sincronizado</td>
+                    <td class="p-3"><span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-medium">${archivo.cantidad} filas</span></td>
+                    <td class="p-3 text-center">
+                        <button onclick="eliminarArchivo('${archivo.nombre}')" class="bg-rose-50 hover:bg-rose-100 text-rose-700 px-3 py-1 rounded text-xs font-semibold transition border border-rose-200">
+                            Eliminar Bloque
+                        </button>
+                    </td>
+                `;
+                tbodyAdmin.appendChild(tr);
+            });
         }
 
         document.getElementById('buscador').addEventListener('input', function(e) {
