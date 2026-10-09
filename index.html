@@ -45,9 +45,14 @@
         <div id="panelAdmin" class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hidden space-y-4">
             <div class="flex justify-between items-center border-b pb-3">
                 <h2 class="text-lg font-bold text-gray-800">Administración de Archivos Cargados</h2>
-                <span class="text-xs bg-blue-50 text-blue-600 font-semibold px-2.5 py-1 rounded-full" id="contadorArchivosAdmin">0 archivos en sistema</span>
+                <div class="flex items-center gap-3">
+                    <span class="text-xs bg-blue-50 text-blue-600 font-semibold px-2.5 py-1 rounded-full" id="contadorArchivosAdmin">0 archivos en sistema</span>
+                    <button onclick="limpiarTodoSistema()" class="bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1 rounded text-xs font-medium transition">
+                        Restablecer Sistema
+                    </button>
+                </div>
             </div>
-            <p class="text-sm text-gray-500">Aquí puedes ver el historial de documentos Excel que se han subido. Si te equivocaste o deseas quitar uno, puedes eliminarlo individualmente y se borrará del buscador.</p>
+            <p class="text-sm text-gray-500">Aquí puedes ver el historial de documentos Excel subidos. Si deseas quitar uno o actualizarlo, puedes eliminarlo individualmente.</p>
             
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse text-sm">
@@ -111,10 +116,9 @@
             "DESCRIPCIÓN DOCUMENTAL", "FECHA EXTREMA", "OBSERVACIONES", "X1", "X2", "X3", "Archivo Origen"
         ];
 
-        let datosGlobales = []; // Todos los registros consolidados
-        let historialArchivos = []; // Lista de archivos subidos y metadatos
+        let datosGlobales = []; 
+        let historialArchivos = []; 
 
-        // Al iniciar la página
         window.addEventListener('DOMContentLoaded', () => {
             inicializarEncabezados();
             cargarDatosGuardados();
@@ -133,13 +137,11 @@
             thead.appendChild(trHead);
         }
 
-        // Mostrar u ocultar el panel de administración
         function toggleAdminPanel() {
             const panel = document.getElementById('panelAdmin');
             panel.classList.toggle('hidden');
         }
 
-        // Cargar datos persistentes del navegador
         function cargarDatosGuardados() {
             const datosGuardados = localStorage.getItem('matriz_datos');
             const archivosGuardados = localStorage.getItem('matriz_archivos');
@@ -155,49 +157,56 @@
             renderizarPanelAdmin();
         }
 
-        // Guardar en la memoria local
         function sincronizarMemoria() {
             localStorage.setItem('matriz_datos', JSON.stringify(datosGlobales));
             localStorage.setItem('matriz_archivos', JSON.stringify(historialArchivos));
             renderizarPanelAdmin();
         }
 
-        // Procesar nuevos archivos Excel
+        // Botón de emergencia para restablecer por completo si hubo un error previo
+        function limpiarTodoSistema() {
+            if (confirm("¿Estás seguro de restablecer todo el sistema y borrar los datos almacenados?")) {
+                localStorage.removeItem('matriz_datos');
+                localStorage.removeItem('matriz_archivos');
+                datosGlobales = [];
+                historialArchivos = [];
+                renderizarTabla(datosGlobales);
+                renderizarPanelAdmin();
+                alert("Sistema restablecido correctamente.");
+            }
+        }
+
         document.getElementById('inputFiles').addEventListener('change', async function(e) {
             const archivos = e.target.files;
             if (archivos.length === 0) return;
 
+            let archivosProcesadosCount = 0;
+
             for (let i = 0; i < archivos.length; i++) {
                 let archivo = archivos[i];
                 
-                // Evitar duplicados exactos por nombre en el historial
-                if (historialArchivos.some(f => f.nombre === archivo.name)) {
-                    alert(`El archivo "${archivo.name}" ya se encuentra registrado en el sistema. Elimínelo primero si desea actualizarlo.`);
-                    continue;
-                }
+                // Si el archivo ya existía, lo purgamos automáticamente para actualizarlo sin bloqueos
+                historialArchivos = historialArchivos.filter(f => f.nombre !== archivo.name);
+                datosGlobales = datosGlobales.filter(fila => fila[16] !== archivo.name);
 
                 let registrosArchivo = await leerArchivoExcel(archivo);
                 
                 if (registrosArchivo.length > 0) {
-                    // Registrar en el historial de administrador
                     historialArchivos.push({
-                        id: Date.now() + "_" + Math.random(),
                         nombre: archivo.name,
                         fecha: new Date().toLocaleDateString() + " " + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
                         cantidad: registrosArchivo.length
                     });
 
-                    // Añadir filas a la base de datos global
                     datosGlobales = [...datosGlobales, ...registrosArchivo];
-                } else {
-                    alert(`El archivo "${archivo.name}" no contiene datos válidos para la matriz.`);
+                    archivosProcesadosCount++;
                 }
             }
 
             sincronizarMemoria();
             renderizarTabla(datosGlobales);
-            e.target.value = ''; // Limpiar selector
-            alert("¡Carga y sincronización completada con éxito!");
+            e.target.value = ''; 
+            alert(`¡Carga exitosa! Se procesaron ${archivosProcesadosCount} archivo(s). Registros totales: ${datosGlobales.length}.`);
         });
 
         function leerArchivoExcel(archivo) {
@@ -221,7 +230,7 @@
                                     for (let c = 0; c < 16; c++) {
                                         filaAjustada.push(fila[c] !== undefined ? fila[c] : "");
                                     }
-                                    filaAjustada.push(archivo.name); // Identificador de origen
+                                    filaAjustada.push(archivo.name); // Origen
                                     resultadosParciales.push(filaAjustada);
                                 }
                             }
@@ -235,22 +244,17 @@
             });
         }
 
-        // Eliminar un archivo específico y sus registros asociados
         function eliminarArchivo(nombreArchivo) {
-            if (confirm(`¿Estás seguro de eliminar el archivo "${nombreArchivo}"? Se borrarán todos los registros asociados del buscador.`)) {
-                // Filtrar el historial eliminando el archivo seleccionado
+            if (confirm(`¿Estás seguro de eliminar el archivo "${nombreArchivo}"? Se borrarán sus registros del buscador.`)) {
                 historialArchivos = historialArchivos.filter(f => f.nombre !== nombreArchivo);
-                
-                // Filtrar los datos globales quitando las filas que venían de ese archivo (columna 16 o índice 16)
                 datosGlobales = datosGlobales.filter(fila => fila[16] !== nombreArchivo);
 
                 sincronizarMemoria();
                 renderizarTabla(datosGlobales);
-                alert("Archivo y sus registros eliminados correctamente.");
+                alert("Archivo eliminado correctamente.");
             }
         }
 
-        // Renderizar tabla principal
         function renderizarTabla(datos) {
             const tbody = document.getElementById('tablaCuerpo');
             const contador = document.getElementById('contadorResultados');
@@ -263,7 +267,10 @@
             }
 
             let fragmento = document.createDocumentFragment();
-            datos.forEach(fila => {
+            // Mostramos los primeros 500 registros para mantener la velocidad ultra rápida del navegador
+            let datosMostrar = datos.slice(0, 500);
+
+            datosMostrar.forEach(fila => {
                 let tr = document.createElement('tr');
                 tr.className = "hover:bg-gray-50 transition border-b border-gray-100";
                 
@@ -277,10 +284,13 @@
             });
 
             tbody.appendChild(fragmento);
-            contador.innerText = `Mostrando ${datos.length} registros en total`;
+            if (datos.length > 500) {
+                contador.innerText = `Mostrando 500 de ${datos.length} registros (Usa el buscador para filtrar)`;
+            } else {
+                contador.innerText = `Mostrando ${datos.length} registros en total`;
+            }
         }
 
-        // Renderizar la tabla dentro del Panel de Administración
         function renderizarPanelAdmin() {
             const tbodyAdmin = document.getElementById('tablaArchivosAdmin');
             const contadorAdmin = document.getElementById('contadorArchivosAdmin');
@@ -310,15 +320,44 @@
             });
         }
 
-        // Buscador instantáneo en tiempo real
         document.getElementById('buscador').addEventListener('input', function(e) {
             const textoBusqueda = e.target.value.toLowerCase();
             
+            if (textoBusqueda.trim() === "") {
+                renderizarTabla(datosGlobales);
+                return;
+            }
+
             const datosFiltrados = datosGlobales.filter(fila => {
                 return fila.some(celda => String(celda).toLowerCase().includes(textoBusqueda));
             });
 
-            renderizarTabla(datosFiltrados);
+            const tbody = document.getElementById('tablaCuerpo');
+            const contador = document.getElementById('contadorResultados');
+            tbody.innerHTML = '';
+
+            if (datosFiltrados.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="17" class="text-center py-12 text-gray-400">No hay coincidencias con la búsqueda.</td></tr>`;
+                contador.innerText = "Mostrando 0 registros";
+                return;
+            }
+
+            let fragmento = document.createDocumentFragment();
+            datosFiltrados.slice(0, 300).forEach(fila => {
+                let tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-50 transition border-b border-gray-100";
+                
+                for (let j = 0; j < encabezadosFijos.length; j++) {
+                    let td = document.createElement('td');
+                    td.className = "px-3 py-2 whitespace-nowrap text-xs text-gray-700";
+                    td.innerText = fila[j] !== undefined ? fila[j] : "";
+                    tr.appendChild(td);
+                }
+                fragmento.appendChild(tr);
+            });
+
+            tbody.appendChild(fragmento);
+            contador.innerText = `Resultados encontrados: ${datosFiltrados.length}`;
         });
     </script>
 </body>
