@@ -78,16 +78,17 @@
             <div class="flex justify-between items-center border-b border-slate-100 pb-3">
                 <div class="flex items-center gap-2">
                     <div class="h-3 w-3 rounded-full bg-mimp-600"></div>
-                    <h2 class="text-base font-bold text-slate-900">Gestión de Archivos en el Repositorio</h2>
+                    <h2 class="text-base font-bold text-slate-900">Gestión de Archivos en el Repositorio Compartido</h2>
                 </div>
                 <div class="flex items-center gap-3">
                     <span class="text-xs bg-mimp-50 text-mimp-700 font-bold px-3 py-1 rounded-full border border-mimp-100" id="contadorArchivosAdmin">0 archivos activos</span>
-                    <button onclick="limpiarTodoSistema()" class="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-3 py-1 rounded-lg text-xs font-semibold transition">
-                        Restablecer Todo
+                    <button onclick="descargarBaseDatosJSON()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow flex items-center gap-1.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                        Descargar base_datos.json para GitHub
                     </button>
                 </div>
             </div>
-            <p class="text-xs text-slate-500">Listado de los documentos cargados. Si necesitas actualizar un archivo o eliminar uno erróneo, haz clic en eliminar para depurar el buscador.</p>
+            <p class="text-xs text-slate-500">Cada vez que cargues nuevos archivos, haz clic en el botón verde para descargar el archivo <code class="bg-slate-100 px-1 py-0.5 rounded text-slate-700 font-bold">base_datos.json</code> y súbelo a tu repositorio en GitHub para que tus compañeros vean los cambios en tiempo real.</p>
             
             <div class="overflow-x-auto rounded-lg border border-slate-100 max-h-60">
                 <table class="w-full text-left border-collapse text-xs">
@@ -118,7 +119,7 @@
                     class="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mimp-600 text-xs shadow-inner">
             </div>
             <div class="text-xs font-semibold text-slate-600 bg-slate-50 px-4 py-2 rounded-lg border border-slate-200" id="contadorResultados">
-                Iniciando base de datos segura...
+                Sincronizando con repositorio compartido...
             </div>
         </div>
 
@@ -136,7 +137,7 @@
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-slate-300 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                     </svg>
-                                    <span>Cargando registros del repositorio...</span>
+                                    <span>Cargando registros compartidos...</span>
                                 </div>
                             </td>
                         </tr>
@@ -152,7 +153,7 @@
         Ministerio de la Mujer y Poblaciones Vulnerables (MIMP) — Oficina de Atención a la Ciudadanía y Gestión Documental
     </footer>
 
-    <!-- Lógica de Base de Datos IndexedDB -->
+    <!-- Lógica de Sincronización Global con GitHub JSON -->
     <script>
         const encabezadosFijos = [
             "N° CAJA (CÓDIGO)", "Nº DE PAQUETE", "N° DE REGISTRO ARCHIVÍSTICO", "TOMO", 
@@ -161,32 +162,12 @@
             "DESCRIPCIÓN DOCUMENTAL", "FECHA EXTREMA", "OBSERVACIONES", "X1", "X2", "X3", "Archivo Origen"
         ];
 
-        let db;
         let datosGlobalesCache = [];
-
-        const request = indexedDB.open("MIMP_MatrizDB", 1);
-
-        request.onerror = function(event) {
-            console.error("Error al abrir IndexedDB", event);
-        };
-
-        request.onupgradeneeded = function(event) {
-            db = event.target.result;
-            if (!db.objectStoreNames.contains("registros")) {
-                db.createObjectStore("registros", { keyPath: "id", autoIncrement: true });
-            }
-            if (!db.objectStoreNames.contains("archivos")) {
-                db.createObjectStore("archivos", { keyPath: "nombre" });
-            }
-        };
-
-        request.onsuccess = function(event) {
-            db = event.target.result;
-            cargarDatosDesdeDB();
-        };
+        let historialArchivosCache = [];
 
         window.addEventListener('DOMContentLoaded', () => {
             inicializarEncabezados();
+            cargarBaseDatosRemota();
         });
 
         function inicializarEncabezados() {
@@ -207,97 +188,79 @@
             panel.classList.toggle('hidden');
         }
 
-        function cargarDatosDesdeDB() {
-            if (!db) return;
-            
-            let transaction = db.transaction(["registros", "archivos"], "readonly");
-            let regStore = transaction.objectStore("registros");
-            let archStore = transaction.objectStore("archivos");
-
-            let reqRegs = regStore.getAll();
-            let reqArchs = archStore.getAll();
-
-            reqRegs.onsuccess = function() {
-                datosGlobalesCache = reqRegs.result;
-                renderizarTabla(datosGlobalesCache);
-            };
-
-            reqArchs.onsuccess = function() {
-                renderizarPanelAdmin(reqArchs.result);
-            };
-        }
-
-        function limpiarTodoSistema() {
-            if (confirm("¿Estás seguro de restablecer el sistema y borrar todos los registros almacenados?")) {
-                let transaction = db.transaction(["registros", "archivos"], "readwrite");
-                transaction.objectStore("registros").clear();
-                transaction.objectStore("archivos").clear();
-                
-                transaction.oncomplete = function() {
+        // Cargar automáticamente el archivo base_datos.json alojado en GitHub Pages
+        async function cargarBaseDatosRemota() {
+            try {
+                let response = await fetch('base_datos.json?t=' + new Date().getTime());
+                if (response.ok) {
+                    let jsonData = await response.json();
+                    datosGlobalesCache = jsonData.registros || [];
+                    historialArchivosCache = jsonData.archivos || [];
+                } else {
                     datosGlobalesCache = [];
-                    renderizarTabla([]);
-                    renderizarPanelAdmin([]);
-                    alert("Sistema restablecido correctamente.");
-                };
+                    historialArchivosCache = [];
+                }
+            } catch (e) {
+                console.log("No se encontró base_datos.json previo, iniciando vacío.");
+                datosGlobalesCache = [];
+                historialArchivosCache = [];
             }
+            renderizarTabla(datosGlobalesCache);
+            renderizarPanelAdmin(historialArchivosCache);
         }
 
+        // Función para descargar el archivo JSON actualizado que subirás a GitHub
+        function descargarBaseDatosJSON() {
+            let objetoSalida = {
+                archivos: historialArchivosCache,
+                registros: datosGlobalesCache
+            };
+            let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(objetoSalida));
+            let downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "base_datos.json");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            alert("¡Archivo 'base_datos.json' generado y descargado! Súbelo a la raíz de tu repositorio en GitHub para que tus compañeros vean la actualización.");
+        }
+
+        // Procesar nuevos archivos Excel
         document.getElementById('inputFiles').addEventListener('change', async function(e) {
             const archivos = Array.from(e.target.files);
             if (archivos.length === 0) return;
 
             const contadorDiv = document.getElementById('contadorResultados');
-            contadorDiv.innerHTML = `<span class="text-mimp-600 font-bold animate-pulse">Procesando y guardando en repositorio seguro...</span>`;
+            contadorDiv.innerHTML = `<span class="text-mimp-600 font-bold animate-pulse">Procesando documentos...</span>`;
 
             let promesasLectura = archivos.map(archivo => leerArchivoExcel(archivo));
             let resultadosTotales = await Promise.all(promesasLectura);
 
-            let transaction = db.transaction(["registros", "archivos"], "readwrite");
-            let regStore = transaction.objectStore("registros");
-            let archStore = transaction.objectStore("archivos");
-
             let archivosProcesadosCount = 0;
 
-            for (let res of resultadosTotales) {
+            resultadosTotales.forEach(res => {
                 if (res && res.registros.length > 0) {
-                    archStore.put({
+                    // Si ya existía el archivo en el historial, lo reemplazamos
+                    historialArchivosCache = historialArchivosCache.filter(f => f.nombre !== res.nombre);
+                    datosGlobalesCache = datosGlobalesCache.filter(fila => fila[16] !== res.nombre);
+
+                    historialArchivosCache.push({
                         nombre: res.nombre,
                         fecha: new Date().toLocaleDateString() + " " + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
                         cantidad: res.registros.length
                     });
+
+                    datosGlobalesCache = [...datosGlobalesCache, ...res.registros];
                     archivosProcesadosCount++;
                 }
-            }
+            });
 
-            let requestCursor = regStore.openCursor();
-            requestCursor.onsuccess = function(event) {
-                let cursor = event.target.result;
-                if (cursor) {
-                    let fila = cursor.value;
-                    let nombresNuevos = resultadosTotales.map(r => r.nombre);
-                    if (nombresNuevos.includes(fila[16])) {
-                        regStore.delete(cursor.primaryKey);
-                    }
-                    cursor.continue();
-                }
-            };
+            renderizarTabla(datosGlobalesCache);
+            renderizarPanelAdmin(historialArchivosCache);
+            e.target.value = '';
 
-            transaction.oncomplete = function() {
-                let tx2 = db.transaction(["registros"], "readwrite");
-                let store2 = tx2.objectStore("registros");
-
-                resultadosTotales.forEach(res => {
-                    res.registros.forEach(fila => {
-                        store2.add(fila);
-                    });
-                });
-
-                tx2.oncomplete = function() {
-                    cargarDatosDesdeDB();
-                    e.target.value = '';
-                    alert(`¡Carga exitosa! Se procesaron ${archivosProcesadosCount} archivo(s).`);
-                };
-            };
+            // Guardar automáticamente localmente y sugerir descarga del JSON para GitHub
+            descargarBaseDatosJSON();
         });
 
         function leerArchivoExcel(archivo) {
@@ -335,28 +298,13 @@
         }
 
         function eliminarArchivo(nombreArchivo) {
-            if (confirm(`¿Estás seguro de eliminar el archivo "${nombreArchivo}"? Se borrarán sus registros de la matriz.`)) {
-                let transaction = db.transaction(["registros", "archivos"], "readwrite");
-                let archStore = transaction.objectStore("archivos");
-                let regStore = transaction.objectStore("registros");
+            if (confirm(`¿Estás seguro de eliminar el archivo "${nombreArchivo}"?`)) {
+                historialArchivosCache = historialArchivosCache.filter(f => f.nombre !== nombreArchivo);
+                datosGlobalesCache = datosGlobalesCache.filter(fila => fila[16] !== nombreArchivo);
 
-                archStore.delete(nombreArchivo);
-
-                let requestCursor = regStore.openCursor();
-                requestCursor.onsuccess = function(event) {
-                    let cursor = event.target.result;
-                    if (cursor) {
-                        if (cursor.value[16] === nombreArchivo) {
-                            regStore.delete(cursor.primaryKey);
-                        }
-                        cursor.continue();
-                    }
-                };
-
-                transaction.oncomplete = function() {
-                    cargarDatosDesdeDB();
-                    alert("Archivo eliminado y matriz actualizada correctamente.");
-                };
+                renderizarTabla(datosGlobalesCache);
+                renderizarPanelAdmin(historialArchivosCache);
+                descargarBaseDatosJSON();
             }
         }
 
@@ -373,7 +321,7 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                                 </svg>
-                                <span>No hay registros disponibles. Sube tus planillas Excel para comenzar.</span>
+                                <span>No hay registros cargados. Sube el archivo base_datos.json a GitHub o carga planillas Excel.</span>
                             </div>
                         </td>
                     </tr>`;
@@ -400,7 +348,7 @@
             tbody.appendChild(fragmento);
             
             if (datos.length > 300) {
-                contador.innerText = `Mostrando 300 de ${datos.length} registros (Usa el buscador para filtrar con precisión)`;
+                contador.innerText = `Mostrando 300 de ${datos.length} registros (Usa el buscador para filtrar)`;
             } else {
                 contador.innerText = `Mostrando ${datos.length} registros en total`;
             }
@@ -415,7 +363,7 @@
             contadorAdmin.innerText = `${total} archivos activos`;
 
             if (!archivos || total === 0) {
-                tbodyAdmin.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-slate-400">No se ha cargado ningún archivo en el repositorio todavía.</td></tr>`;
+                tbodyAdmin.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-slate-400">No hay archivos en el repositorio.</td></tr>`;
                 return;
             }
 
