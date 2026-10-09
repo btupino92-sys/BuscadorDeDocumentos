@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Buscador y Repositorio de Matriz Documental</title>
+    <title>Buscador y Panel de Administración - Matriz Documental</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- SheetJS para leer Excel -->
@@ -13,21 +13,57 @@
 
     <div class="max-w-7xl mx-auto space-y-6">
         
-        <!-- Encabezado -->
+        <!-- Encabezado Principal -->
         <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
             <div>
-                <h1 class="text-2xl font-bold text-gray-900">Repositorio y Buscador - Matriz Documental</h1>
-                <p class="text-sm text-gray-500">Los archivos cargados se guardan automáticamente en el repositorio institucional.</p>
+                <h1 class="text-2xl font-bold text-gray-900">Buscador Institucional - Matriz Documental</h1>
+                <p class="text-sm text-gray-500">Consulta los registros consolidados o gestiona los archivos cargados.</p>
             </div>
             
-            <!-- Botón de Carga -->
-            <label class="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white font-medium px-5 py-2.5 rounded-lg shadow transition flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                </svg>
-                Cargar y Guardar Excel
-                <input type="file" id="inputFiles" multiple accept=".xlsx, .xls, .csv" class="hidden" />
-            </label>
+            <div class="flex items-center gap-3">
+                <!-- Botón para alternar a la vista de Administrador -->
+                <button onclick="toggleAdminPanel()" id="btnAdmin" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium px-4 py-2.5 rounded-lg shadow-sm transition text-sm flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    Panel de Administración
+                </button>
+
+                <!-- Botón de Carga de Archivos -->
+                <label class="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white font-medium px-5 py-2.5 rounded-lg shadow transition flex items-center gap-2 text-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    </svg>
+                    Cargar Excel
+                    <input type="file" id="inputFiles" multiple accept=".xlsx, .xls, .csv" class="hidden" />
+                </label>
+            </div>
+        </div>
+
+        <!-- SECCIÓN DE ADMINISTRACIÓN (Oculta por defecto) -->
+        <div id="panelAdmin" class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hidden space-y-4">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h2 class="text-lg font-bold text-gray-800">Administración de Archivos Cargados</h2>
+                <span class="text-xs bg-blue-50 text-blue-600 font-semibold px-2.5 py-1 rounded-full" id="contadorArchivosAdmin">0 archivos en sistema</span>
+            </div>
+            <p class="text-sm text-gray-500">Aquí puedes ver el historial de documentos Excel que se han subido. Si te equivocaste o deseas quitar uno, puedes eliminarlo individualmente y se borrará del buscador.</p>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-sm">
+                    <thead class="bg-gray-100 text-gray-700 uppercase text-xs">
+                        <tr>
+                            <th class="p-3 border-b">Nombre del Archivo</th>
+                            <th class="p-3 border-b">Fecha de Carga</th>
+                            <th class="p-3 border-b">Registros Aportados</th>
+                            <th class="p-3 border-b text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaArchivosAdmin" class="divide-y divide-gray-100 text-gray-600">
+                        <!-- Se llena dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <!-- Buscador y Contador -->
@@ -42,21 +78,21 @@
                     class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
             </div>
             <div class="text-sm text-gray-500 font-medium" id="contadorResultados">
-                Cargando registros del repositorio...
+                Mostrando 0 registros
             </div>
         </div>
 
-        <!-- Tabla de Resultados con Encabezados Fijos -->
+        <!-- Tabla Principal de Resultados con Encabezados Fijos -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <div class="overflow-x-auto max-h-[600px]">
                 <table class="w-full text-left border-collapse" id="tablaMatriz">
                     <thead class="bg-gray-100 text-gray-700 text-xs uppercase font-semibold sticky top-0 z-10" id="tablaEncabezado">
-                        <!-- Se pintan los 16 campos exactos por defecto -->
+                        <!-- 16 columnas fijas -->
                     </thead>
                     <tbody class="divide-y divide-gray-100 text-sm text-gray-600" id="tablaCuerpo">
                         <tr>
                             <td colspan="17" class="text-center py-12 text-gray-400">
-                                Sincronizando datos...
+                                No hay registros cargados. Sube un archivo Excel para comenzar.
                             </td>
                         </tr>
                     </tbody>
@@ -67,7 +103,7 @@
     </div>
 
     <script>
-        // Tus 16 columnas fijas institucionales + Columna de Trazabilidad (Archivo Origen)
+        // Tus 16 columnas fijas institucionales + Archivo Origen
         const encabezadosFijos = [
             "N° CAJA (CÓDIGO)", "Nº DE PAQUETE", "N° DE REGISTRO ARCHIVÍSTICO", "TOMO", 
             "RANGO INICIAL", "RANGO FINAL", "N° FOLIOS", "SERIE DOCUMENTAL", 
@@ -75,12 +111,13 @@
             "DESCRIPCIÓN DOCUMENTAL", "FECHA EXTREMA", "OBSERVACIONES", "X1", "X2", "X3", "Archivo Origen"
         ];
 
-        let datosGlobales = [];
+        let datosGlobales = []; // Todos los registros consolidados
+        let historialArchivos = []; // Lista de archivos subidos y metadatos
 
-        // Al cargar la página, inicializar la tabla con los encabezados fijos
+        // Al iniciar la página
         window.addEventListener('DOMContentLoaded', () => {
             inicializarEncabezados();
-            cargarDatosDesdeRepositorio();
+            cargarDatosGuardados();
         });
 
         function inicializarEncabezados() {
@@ -96,42 +133,71 @@
             thead.appendChild(trHead);
         }
 
-        // Simula la lectura del repositorio local / JSON almacenado en GitHub
-        async function cargarDatosDesdeRepositorio() {
-            try {
-                // Buscamos un archivo consolidado.json en el mismo repositorio
-                let response = await fetch('consolidado.json');
-                if (response.ok) {
-                    datosGlobales = await response.json();
-                    renderizarTabla(datosGlobales);
-                } else {
-                    renderizarTabla([]);
-                }
-            } catch (e) {
-                renderizarTabla([]);
-            }
+        // Mostrar u ocultar el panel de administración
+        function toggleAdminPanel() {
+            const panel = document.getElementById('panelAdmin');
+            panel.classList.toggle('hidden');
         }
 
-        // Procesar nuevos archivos Excel cargados
+        // Cargar datos persistentes del navegador
+        function cargarDatosGuardados() {
+            const datosGuardados = localStorage.getItem('matriz_datos');
+            const archivosGuardados = localStorage.getItem('matriz_archivos');
+
+            if (datosGuardados) {
+                try { datosGlobales = JSON.parse(datosGuardados); } catch (e) { datosGlobales = []; }
+            }
+            if (archivosGuardados) {
+                try { historialArchivos = JSON.parse(archivosGuardados); } catch (e) { historialArchivos = []; }
+            }
+
+            renderizarTabla(datosGlobales);
+            renderizarPanelAdmin();
+        }
+
+        // Guardar en la memoria local
+        function sincronizarMemoria() {
+            localStorage.setItem('matriz_datos', JSON.stringify(datosGlobales));
+            localStorage.setItem('matriz_archivos', JSON.stringify(historialArchivos));
+            renderizarPanelAdmin();
+        }
+
+        // Procesar nuevos archivos Excel
         document.getElementById('inputFiles').addEventListener('change', async function(e) {
             const archivos = e.target.files;
             if (archivos.length === 0) return;
 
-            let nuevosRegistros = [];
-
             for (let i = 0; i < archivos.length; i++) {
                 let archivo = archivos[i];
+                
+                // Evitar duplicados exactos por nombre en el historial
+                if (historialArchivos.some(f => f.nombre === archivo.name)) {
+                    alert(`El archivo "${archivo.name}" ya se encuentra registrado en el sistema. Elimínelo primero si desea actualizarlo.`);
+                    continue;
+                }
+
                 let registrosArchivo = await leerArchivoExcel(archivo);
-                nuevosRegistros = [...nuevosRegistros, ...registrosArchivo];
+                
+                if (registrosArchivo.length > 0) {
+                    // Registrar en el historial de administrador
+                    historialArchivos.push({
+                        id: Date.now() + "_" + Math.random(),
+                        nombre: archivo.name,
+                        fecha: new Date().toLocaleDateString() + " " + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+                        cantidad: registrosArchivo.length
+                    });
+
+                    // Añadir filas a la base de datos global
+                    datosGlobales = [...datosGlobales, ...registrosArchivo];
+                } else {
+                    alert(`El archivo "${archivo.name}" no contiene datos válidos para la matriz.`);
+                }
             }
 
-            // Unir con los datos existentes
-            datosGlobales = [...datosGlobales, ...nuevosRegistros];
+            sincronizarMemoria();
             renderizarTabla(datosGlobales);
-
-            // Instrucción para exportar el JSON actualizado que guardará el repositorio
-            descargarJsonActualizado(datosGlobales);
-            alert("¡Archivos procesados! Se ha descargado un archivo 'consolidado.json'. Súbelo a la raíz de tu repositorio en GitHub para actualizar el repositorio permanente.");
+            e.target.value = ''; // Limpiar selector
+            alert("¡Carga y sincronización completada con éxito!");
         });
 
         function leerArchivoExcel(archivo) {
@@ -147,16 +213,15 @@
                             const worksheet = workbook.Sheets[nombrePestaña];
                             const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
-                            // Omitimos la fila 0 (encabezado del Excel) y leemos desde i = 1
+                            // Omitir cabecera (i = 1)
                             for (let i = 1; i < json.length; i++) {
                                 let fila = json[i];
                                 if (fila && fila.some(celda => celda !== "")) {
-                                    // Asegurar exactamente las 16 columnas + archivo origen
                                     let filaAjustada = [];
                                     for (let c = 0; c < 16; c++) {
                                         filaAjustada.push(fila[c] !== undefined ? fila[c] : "");
                                     }
-                                    filaAjustada.push(archivo.name); // Archivo origen
+                                    filaAjustada.push(archivo.name); // Identificador de origen
                                     resultadosParciales.push(filaAjustada);
                                 }
                             }
@@ -170,13 +235,29 @@
             });
         }
 
+        // Eliminar un archivo específico y sus registros asociados
+        function eliminarArchivo(nombreArchivo) {
+            if (confirm(`¿Estás seguro de eliminar el archivo "${nombreArchivo}"? Se borrarán todos los registros asociados del buscador.`)) {
+                // Filtrar el historial eliminando el archivo seleccionado
+                historialArchivos = historialArchivos.filter(f => f.nombre !== nombreArchivo);
+                
+                // Filtrar los datos globales quitando las filas que venían de ese archivo (columna 16 o índice 16)
+                datosGlobales = datosGlobales.filter(fila => fila[16] !== nombreArchivo);
+
+                sincronizarMemoria();
+                renderizarTabla(datosGlobales);
+                alert("Archivo y sus registros eliminados correctamente.");
+            }
+        }
+
+        // Renderizar tabla principal
         function renderizarTabla(datos) {
             const tbody = document.getElementById('tablaCuerpo');
             const contador = document.getElementById('contadorResultados');
             tbody.innerHTML = '';
 
             if (datos.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="17" class="text-center py-12 text-gray-400">No hay registros en el repositorio. Sube un archivo Excel para comenzar.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="17" class="text-center py-12 text-gray-400">No hay registros en el sistema. Sube un archivo Excel para comenzar.</td></tr>`;
                 contador.innerText = "Mostrando 0 registros";
                 return;
             }
@@ -199,15 +280,34 @@
             contador.innerText = `Mostrando ${datos.length} registros en total`;
         }
 
-        // Genera el archivo JSON consolidado para actualizar el repositorio en GitHub
-        function descargarJsonActualizado(datos) {
-            let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(datos, null, 2));
-            let downloadAnchor = document.createElement('a');
-            downloadAnchor.setAttribute("href", dataStr);
-            downloadAnchor.setAttribute("download", "consolidado.json");
-            document.body.appendChild(downloadAnchor);
-            downloadAnchor.click();
-            downloadAnchor.remove();
+        // Renderizar la tabla dentro del Panel de Administración
+        function renderizarPanelAdmin() {
+            const tbodyAdmin = document.getElementById('tablaArchivosAdmin');
+            const contadorAdmin = document.getElementById('contadorArchivosAdmin');
+            tbodyAdmin.innerHTML = '';
+
+            contadorAdmin.innerText = `${historialArchivos.length} archivos en sistema`;
+
+            if (historialArchivos.length === 0) {
+                tbodyAdmin.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-gray-400">No se ha cargado ningún archivo todavía.</td></tr>`;
+                return;
+            }
+
+            historialArchivos.forEach(archivo => {
+                let tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-50";
+                tr.innerHTML = `
+                    <td class="p-3 font-medium text-gray-800">${archivo.nombre}</td>
+                    <td class="p-3 text-gray-500 text-xs">${archivo.fecha}</td>
+                    <td class="p-3"><span class="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">${archivo.cantidad} filas</span></td>
+                    <td class="p-3 text-center">
+                        <button onclick="eliminarArchivo('${archivo.nombre}')" class="bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1.5 rounded text-xs font-medium transition">
+                            Eliminar archivo
+                        </button>
+                    </td>
+                `;
+                tbodyAdmin.appendChild(tr);
+            });
         }
 
         // Buscador instantáneo en tiempo real
