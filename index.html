@@ -29,11 +29,16 @@
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col font-sans">
 
-    <!-- Barra Superior Institucional en Una Sola Línea -->
+    <!-- URL DE TU APPS SCRIPT CONECTADA A GOOGLE SHEETS -->
+    <script>
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxHgJ43HeSSvoGzjTGGdxegiKqbwEQlQC54sN7JIHfIgQiLJkI4dStikb4FhAHmQEZX/exec";
+    </script>
+
+    <!-- Barra Superior Institucional -->
     <header class="bg-mimp-700 text-white shadow-md border-b border-mimp-800 w-full">
         <div class="w-full px-6 py-3 flex items-center justify-between gap-4">
             
-            <!-- Logo Izquierdo (MIMP) + Texto Institucional en una línea -->
+            <!-- Logo Izquierdo (MIMP) + Texto -->
             <div class="flex items-center gap-4">
                 <div class="bg-white px-2.5 py-1.5 rounded-lg shadow-sm flex items-center justify-center shrink-0">
                     <img src="https://i.postimg.cc/yxzBCHwf/images-(1).png" alt="Logo MIMP" class="h-9 w-auto object-contain">
@@ -44,7 +49,7 @@
                 </div>
             </div>
             
-            <!-- Controles (Panel y Carga) + Logo Derecho (Accede+) en línea recta -->
+            <!-- Controles y Logo Derecho (Accede+) -->
             <div class="flex items-center gap-3 shrink-0">
                 <button onclick="toggleAdminPanel()" id="btnAdmin" class="bg-mimp-800 hover:bg-mimp-600 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow transition flex items-center gap-2 border border-white/10">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -58,7 +63,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                     </svg>
-                    Cargar Excel (Múltiple)
+                    Cargar Excel y Sincronizar
                     <input type="file" id="inputFiles" multiple accept=".xlsx, .xls, .csv" class="hidden" />
                 </label>
 
@@ -78,33 +83,11 @@
             <div class="flex justify-between items-center border-b border-slate-100 pb-3">
                 <div class="flex items-center gap-2">
                     <div class="h-3 w-3 rounded-full bg-mimp-600"></div>
-                    <h2 class="text-base font-bold text-slate-900">Gestión de Archivos en el Repositorio Compartido</h2>
+                    <h2 class="text-base font-bold text-slate-900">Gestión de Archivos en la Nube</h2>
                 </div>
-                <div class="flex items-center gap-3">
-                    <span class="text-xs bg-mimp-50 text-mimp-700 font-bold px-3 py-1 rounded-full border border-mimp-100" id="contadorArchivosAdmin">0 archivos activos</span>
-                    <button onclick="descargarBaseDatosJSON()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow flex items-center gap-1.5">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                        Descargar base_datos.json para GitHub
-                    </button>
-                </div>
+                <span class="text-xs bg-mimp-50 text-mimp-700 font-bold px-3 py-1 rounded-full border border-mimp-100" id="contadorArchivosAdmin">Sincronizado con Google Sheets</span>
             </div>
-            <p class="text-xs text-slate-500">Cada vez que cargues nuevos archivos, haz clic en el botón verde para descargar el archivo <code class="bg-slate-100 px-1 py-0.5 rounded text-slate-700 font-bold">base_datos.json</code> y súbelo a tu repositorio en GitHub para que tus compañeros vean los cambios en tiempo real.</p>
-            
-            <div class="overflow-x-auto rounded-lg border border-slate-100 max-h-60">
-                <table class="w-full text-left border-collapse text-xs">
-                    <thead class="bg-slate-50 text-slate-700 uppercase font-semibold sticky top-0">
-                        <tr>
-                            <th class="p-3 border-b">Nombre del Archivo Excel</th>
-                            <th class="p-3 border-b">Fecha de Carga</th>
-                            <th class="p-3 border-b">Registros Aportados</th>
-                            <th class="p-3 border-b text-center">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tablaArchivosAdmin" class="divide-y divide-slate-100 text-slate-600 bg-white">
-                        <!-- Dinámico -->
-                    </tbody>
-                </table>
-            </div>
+            <p class="text-xs text-slate-500">Los datos se almacenan automáticamente en el Google Sheet central de la institución, permitiendo que cualquier usuario los visualice en tiempo real desde cualquier computadora.</p>
         </div>
 
         <!-- Barra de Búsqueda y Filtros -->
@@ -119,7 +102,7 @@
                     class="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mimp-600 text-xs shadow-inner">
             </div>
             <div class="text-xs font-semibold text-slate-600 bg-slate-50 px-4 py-2 rounded-lg border border-slate-200" id="contadorResultados">
-                Sincronizando con repositorio compartido...
+                Conectando con la nube...
             </div>
         </div>
 
@@ -137,7 +120,7 @@
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-slate-300 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                     </svg>
-                                    <span>Cargando registros compartidos...</span>
+                                    <span>Cargando registros desde la nube...</span>
                                 </div>
                             </td>
                         </tr>
@@ -148,12 +131,12 @@
 
     </main>
 
-    <!-- Pie de página institucional -->
+    <!-- Pie de página -->
     <footer class="bg-white border-t border-slate-200 py-3 text-center text-[11px] text-slate-500">
         Ministerio de la Mujer y Poblaciones Vulnerables (MIMP) — Oficina de Atención a la Ciudadanía y Gestión Documental
     </footer>
 
-    <!-- Lógica de Sincronización Global con GitHub JSON -->
+    <!-- Lógica de Sincronización Automática con la Nube -->
     <script>
         const encabezadosFijos = [
             "N° CAJA (CÓDIGO)", "Nº DE PAQUETE", "N° DE REGISTRO ARCHIVÍSTICO", "TOMO", 
@@ -163,11 +146,10 @@
         ];
 
         let datosGlobalesCache = [];
-        let historialArchivosCache = [];
 
         window.addEventListener('DOMContentLoaded', () => {
             inicializarEncabezados();
-            cargarBaseDatosRemota();
+            cargarDatosDesdeNube();
         });
 
         function inicializarEncabezados() {
@@ -188,79 +170,53 @@
             panel.classList.toggle('hidden');
         }
 
-        // Cargar automáticamente el archivo base_datos.json alojado en GitHub Pages
-        async function cargarBaseDatosRemota() {
+        // Descargar datos automáticamente de Google Sheets
+        async function cargarDatosDesdeNube() {
             try {
-                let response = await fetch('base_datos.json?t=' + new Date().getTime());
-                if (response.ok) {
-                    let jsonData = await response.json();
-                    datosGlobalesCache = jsonData.registros || [];
-                    historialArchivosCache = jsonData.archivos || [];
-                } else {
-                    datosGlobalesCache = [];
-                    historialArchivosCache = [];
-                }
+                let response = await fetch(APPS_SCRIPT_URL);
+                let json = await response.json();
+                datosGlobalesCache = json.registros || [];
+                renderizarTabla(datosGlobalesCache);
             } catch (e) {
-                console.log("No se encontró base_datos.json previo, iniciando vacío.");
-                datosGlobalesCache = [];
-                historialArchivosCache = [];
+                console.error("Error al conectar con la nube", e);
+                document.getElementById('contadorResultados').innerText = "Error de conexión con la nube";
             }
-            renderizarTabla(datosGlobalesCache);
-            renderizarPanelAdmin(historialArchivosCache);
         }
 
-        // Función para descargar el archivo JSON actualizado que subirás a GitHub
-        function descargarBaseDatosJSON() {
-            let objetoSalida = {
-                archivos: historialArchivosCache,
-                registros: datosGlobalesCache
-            };
-            let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(objetoSalida));
-            let downloadAnchor = document.createElement('a');
-            downloadAnchor.setAttribute("href", dataStr);
-            downloadAnchor.setAttribute("download", "base_datos.json");
-            document.body.appendChild(downloadAnchor);
-            downloadAnchor.click();
-            downloadAnchor.remove();
-            alert("¡Archivo 'base_datos.json' generado y descargado! Súbelo a la raíz de tu repositorio en GitHub para que tus compañeros vean la actualización.");
-        }
-
-        // Procesar nuevos archivos Excel
+        // Cargar nuevos Exceles y subirlos automáticamente a la nube
         document.getElementById('inputFiles').addEventListener('change', async function(e) {
             const archivos = Array.from(e.target.files);
             if (archivos.length === 0) return;
 
             const contadorDiv = document.getElementById('contadorResultados');
-            contadorDiv.innerHTML = `<span class="text-mimp-600 font-bold animate-pulse">Procesando documentos...</span>`;
+            contadorDiv.innerHTML = `<span class="text-mimp-600 font-bold animate-pulse">Procesando y sincronizando con la nube...</span>`;
 
             let promesasLectura = archivos.map(archivo => leerArchivoExcel(archivo));
             let resultadosTotales = await Promise.all(promesasLectura);
 
-            let archivosProcesadosCount = 0;
-
             resultadosTotales.forEach(res => {
                 if (res && res.registros.length > 0) {
-                    // Si ya existía el archivo en el historial, lo reemplazamos
-                    historialArchivosCache = historialArchivosCache.filter(f => f.nombre !== res.nombre);
                     datosGlobalesCache = datosGlobalesCache.filter(fila => fila[16] !== res.nombre);
-
-                    historialArchivosCache.push({
-                        nombre: res.nombre,
-                        fecha: new Date().toLocaleDateString() + " " + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-                        cantidad: res.registros.length
-                    });
-
                     datosGlobalesCache = [...datosGlobalesCache, ...res.registros];
-                    archivosProcesadosCount++;
                 }
             });
 
-            renderizarTabla(datosGlobalesCache);
-            renderizarPanelAdmin(historialArchivosCache);
-            e.target.value = '';
+            // Enviar todo consolidado a Google Sheets automáticamente
+            try {
+                await fetch(APPS_SCRIPT_URL, {
+                    method: "POST",
+                    body: JSON.stringify({
+                        accion: "sincronizar",
+                        registros: datosGlobalesCache
+                    })
+                });
 
-            // Guardar automáticamente localmente y sugerir descarga del JSON para GitHub
-            descargarBaseDatosJSON();
+                renderizarTabla(datosGlobalesCache);
+                e.target.value = '';
+                alert("¡Sincronización exitosa! Los datos se han guardado en la nube y están disponibles de inmediato para todas las computadoras.");
+            } catch (err) {
+                alert("Hubo un error al subir los datos a la nube. Revisa tu conexión.");
+            }
         });
 
         function leerArchivoExcel(archivo) {
@@ -297,17 +253,6 @@
             });
         }
 
-        function eliminarArchivo(nombreArchivo) {
-            if (confirm(`¿Estás seguro de eliminar el archivo "${nombreArchivo}"?`)) {
-                historialArchivosCache = historialArchivosCache.filter(f => f.nombre !== nombreArchivo);
-                datosGlobalesCache = datosGlobalesCache.filter(fila => fila[16] !== nombreArchivo);
-
-                renderizarTabla(datosGlobalesCache);
-                renderizarPanelAdmin(historialArchivosCache);
-                descargarBaseDatosJSON();
-            }
-        }
-
         function renderizarTabla(datos) {
             const tbody = document.getElementById('tablaCuerpo');
             const contador = document.getElementById('contadorResultados');
@@ -321,7 +266,7 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                                 </svg>
-                                <span>No hay registros cargados. Sube el archivo base_datos.json a GitHub o carga planillas Excel.</span>
+                                <span>No hay registros en la nube. Sube tus planillas Excel para comenzar.</span>
                             </div>
                         </td>
                     </tr>`;
@@ -348,40 +293,10 @@
             tbody.appendChild(fragmento);
             
             if (datos.length > 300) {
-                contador.innerText = `Mostrando 300 de ${datos.length} registros (Usa el buscador para filtrar)`;
+                contador.innerText = `Mostrando 300 de ${datos.length} registros sincronizados`;
             } else {
-                contador.innerText = `Mostrando ${datos.length} registros en total`;
+                contador.innerText = `Mostrando ${datos.length} registros sincronizados`;
             }
-        }
-
-        function renderizarPanelAdmin(archivos) {
-            const tbodyAdmin = document.getElementById('tablaArchivosAdmin');
-            const contadorAdmin = document.getElementById('contadorArchivosAdmin');
-            tbodyAdmin.innerHTML = '';
-
-            const total = archivos ? archivos.length : 0;
-            contadorAdmin.innerText = `${total} archivos activos`;
-
-            if (!archivos || total === 0) {
-                tbodyAdmin.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-slate-400">No hay archivos en el repositorio.</td></tr>`;
-                return;
-            }
-
-            archivos.forEach(archivo => {
-                let tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50";
-                tr.innerHTML = `
-                    <td class="p-3 font-semibold text-slate-800">${archivo.nombre}</td>
-                    <td class="p-3 text-slate-500">${archivo.fecha}</td>
-                    <td class="p-3"><span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-medium">${archivo.cantidad} filas</span></td>
-                    <td class="p-3 text-center">
-                        <button onclick="eliminarArchivo('${archivo.nombre}')" class="bg-rose-50 hover:bg-rose-100 text-rose-700 px-3 py-1 rounded text-xs font-semibold transition border border-rose-200">
-                            Eliminar
-                        </button>
-                    </td>
-                `;
-                tbodyAdmin.appendChild(tr);
-            });
         }
 
         document.getElementById('buscador').addEventListener('input', function(e) {
