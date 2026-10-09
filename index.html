@@ -34,11 +34,11 @@
         const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxHgJ43HeSSvoGzjTGGdxegiKqbwEQlQC54sN7JIHfIgQiLJkI4dStikb4FhAHmQEZX/exec";
     </script>
 
-    <!-- Barra Superior Institucional -->
+    <!-- Barra Superior Institucional en Una Sola Línea -->
     <header class="bg-mimp-700 text-white shadow-md border-b border-mimp-800 w-full">
         <div class="w-full px-6 py-3 flex items-center justify-between gap-4">
             
-            <!-- Logo Izquierdo (MIMP) + Texto -->
+            <!-- Logo Izquierdo (MIMP) + Texto Institucional en una línea -->
             <div class="flex items-center gap-4">
                 <div class="bg-white px-2.5 py-1.5 rounded-lg shadow-sm flex items-center justify-center shrink-0">
                     <img src="https://i.postimg.cc/yxzBCHwf/images-(1).png" alt="Logo MIMP" class="h-9 w-auto object-contain">
@@ -49,7 +49,7 @@
                 </div>
             </div>
             
-            <!-- Controles y Logo Derecho (Accede+) -->
+            <!-- Controles (Panel y Carga) + Logo Derecho (Accede+) en línea recta -->
             <div class="flex items-center gap-3 shrink-0">
                 <button onclick="toggleAdminPanel()" id="btnAdmin" class="bg-mimp-800 hover:bg-mimp-600 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow transition flex items-center gap-2 border border-white/10">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -136,7 +136,7 @@
         Ministerio de la Mujer y Poblaciones Vulnerables (MIMP) — Oficina de Atención a la Ciudadanía y Gestión Documental
     </footer>
 
-    <!-- Lógica de Sincronización Automática con la Nube -->
+    <!-- Lógica de Sincronización Automática con la Nube (Por Lotes) -->
     <script>
         const encabezadosFijos = [
             "N° CAJA (CÓDIGO)", "Nº DE PAQUETE", "N° DE REGISTRO ARCHIVÍSTICO", "TOMO", 
@@ -183,40 +183,62 @@
             }
         }
 
-        // Cargar nuevos Exceles y subirlos automáticamente a la nube
+        // Cargar nuevos Exceles y subirlos por lotes inteligentes a Google Sheets
         document.getElementById('inputFiles').addEventListener('change', async function(e) {
             const archivos = Array.from(e.target.files);
             if (archivos.length === 0) return;
 
             const contadorDiv = document.getElementById('contadorResultados');
-            contadorDiv.innerHTML = `<span class="text-mimp-600 font-bold animate-pulse">Procesando y sincronizando con la nube...</span>`;
+            contadorDiv.innerHTML = `<span class="text-mimp-600 font-bold animate-pulse">Procesando archivos localmente...</span>`;
 
             let promesasLectura = archivos.map(archivo => leerArchivoExcel(archivo));
             let resultadosTotales = await Promise.all(promesasLectura);
 
+            let todosLosRegistrosNuevos = [];
             resultadosTotales.forEach(res => {
                 if (res && res.registros.length > 0) {
-                    datosGlobalesCache = datosGlobalesCache.filter(fila => fila[16] !== res.nombre);
-                    datosGlobalesCache = [...datosGlobalesCache, ...res.registros];
+                    todosLosRegistrosNuevos = [...todosLosRegistrosNuevos, ...res.registros];
                 }
             });
 
-            // Enviar todo consolidado a Google Sheets automáticamente
-            try {
-                await fetch(APPS_SCRIPT_URL, {
-                    method: "POST",
-                    body: JSON.stringify({
-                        accion: "sincronizar",
-                        registros: datosGlobalesCache
-                    })
-                });
-
-                renderizarTabla(datosGlobalesCache);
-                e.target.value = '';
-                alert("¡Sincronización exitosa! Los datos se han guardado en la nube y están disponibles de inmediato para todas las computadoras.");
-            } catch (err) {
-                alert("Hubo un error al subir los datos a la nube. Revisa tu conexión.");
+            if (todosLosRegistrosNuevos.length === 0) {
+                alert("No se encontraron registros válidos en los archivos seleccionados.");
+                return;
             }
+
+            // Subir en lotes de 2,000 filas para evitar bloqueos por tamaño de red
+            const tamañoLote = 2000;
+            let totalEnviados = 0;
+
+            for (let i = 0; i < todosLosRegistrosNuevos.length; i += tamañoLote) {
+                let loteActual = todosLosRegistrosNuevos.slice(i, i + tamañoLote);
+                let esPrimerLote = (i === 0);
+
+                contadorDiv.innerHTML = `<span class="text-mimp-600 font-bold animate-pulse">Sincronizando con la nube (${i + loteActual.length} / ${todosLosRegistrosNuevos.length})...</span>`;
+
+                try {
+                    let response = await fetch(APPS_SCRIPT_URL, {
+                        method: "POST",
+                        body: JSON.stringify({
+                            accion: "sincronizar_lote",
+                            esPrimerLote: esPrimerLote,
+                            registros: loteActual
+                        })
+                    });
+                    let resultado = await response.json();
+                    if (resultado.status !== "success") {
+                        throw new Error(resultado.message);
+                    }
+                    totalEnviados += loteActual.length;
+                } catch (err) {
+                    alert("Error al sincronizar el lote con la nube: " + err);
+                    break;
+                }
+            }
+
+            await cargarDatosDesdeNube();
+            e.target.value = '';
+            alert(`¡Sincronización exitosa! Se han guardado ${totalEnviados} registros en la nube para todas las computadoras.`);
         });
 
         function leerArchivoExcel(archivo) {
