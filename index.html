@@ -3,26 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Buscador y Panel de Administración - Matriz Documental</title>
+    <title>Sistema de Gestión y Búsqueda Documental - MIMP</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- SheetJS para leer Excel -->
+    <!-- SheetJS para procesamiento rápido de Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Configuración de colores institucionales MIMP (Vino/Borgoña) -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        mimp: {
+                            50: '#fdf2f4',
+                            100: '#fbe8ec',
+                            600: '#8b1e3f', // Color principal institucional (Vino MIMP)
+                            700: '#721733',
+                            800: '#5c1228',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
 </head>
-<body class="bg-gray-50 text-gray-800 min-h-screen p-6">
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col font-sans">
 
-    <div class="max-w-7xl mx-auto space-y-6">
-        
-        <!-- Encabezado Principal -->
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
-            <div>
-                <h1 class="text-2xl font-bold text-gray-900">Buscador Institucional - Matriz Documental</h1>
-                <p class="text-sm text-gray-500">Consulta los registros consolidados o gestiona los archivos cargados.</p>
+    <!-- Barra Superior Institucional -->
+    <header class="bg-mimp-700 text-white shadow-md border-b border-mimp-800">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-white/10 p-2.5 rounded-lg border border-white/20">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold tracking-wide">Ministerio de la Mujer y Poblaciones Vulnerables</h1>
+                    <p class="text-xs text-mimp-100 opacity-90">Oficina de Atención a la Ciudadanía y Gestión Documental</p>
+                </div>
             </div>
             
             <div class="flex items-center gap-3">
-                <!-- Botón para alternar a la vista de Administrador -->
-                <button onclick="toggleAdminPanel()" id="btnAdmin" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium px-4 py-2.5 rounded-lg shadow-sm transition text-sm flex items-center gap-2">
+                <button onclick="toggleAdminPanel()" id="btnAdmin" class="bg-mimp-800 hover:bg-mimp-600 text-white text-xs font-semibold px-4 py-2.5 rounded-lg shadow transition flex items-center gap-2 border border-white/10">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -30,74 +53,85 @@
                     Panel de Administración
                 </button>
 
-                <!-- Botón de Carga de Archivos -->
-                <label class="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white font-medium px-5 py-2.5 rounded-lg shadow transition flex items-center gap-2 text-sm">
+                <label class="cursor-pointer bg-white text-mimp-700 hover:bg-mimp-50 font-bold text-xs px-4 py-2.5 rounded-lg shadow transition flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                     </svg>
-                    Cargar Excel
+                    Cargar Excel (Múltiple)
                     <input type="file" id="inputFiles" multiple accept=".xlsx, .xls, .csv" class="hidden" />
                 </label>
             </div>
         </div>
+    </header>
 
-        <!-- SECCIÓN DE ADMINISTRACIÓN (Oculta por defecto) -->
-        <div id="panelAdmin" class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hidden space-y-4">
-            <div class="flex justify-between items-center border-b pb-3">
-                <h2 class="text-lg font-bold text-gray-800">Administración de Archivos Cargados</h2>
+    <!-- Contenido Principal -->
+    <main class="max-w-7xl mx-auto px-6 py-6 space-y-6 flex-grow w-full">
+
+        <!-- PANEL DE ADMINISTRACIÓN (Oculto por defecto) -->
+        <div id="panelAdmin" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hidden space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <div class="flex items-center gap-2">
+                    <div class="h-3 w-3 rounded-full bg-mimp-600"></div>
+                    <h2 class="text-base font-bold text-slate-900">Gestión de Archivos en el Repositorio</h2>
+                </div>
                 <div class="flex items-center gap-3">
-                    <span class="text-xs bg-blue-50 text-blue-600 font-semibold px-2.5 py-1 rounded-full" id="contadorArchivosAdmin">0 archivos en sistema</span>
-                    <button onclick="limpiarTodoSistema()" class="bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1 rounded text-xs font-medium transition">
-                        Restablecer Sistema
+                    <span class="text-xs bg-mimp-50 text-mimp-700 font-bold px-3 py-1 rounded-full border border-mimp-100" id="contadorArchivosAdmin">0 archivos activos</span>
+                    <button onclick="limpiarTodoSistema()" class="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-3 py-1 rounded-lg text-xs font-semibold transition">
+                        Restablecer Todo
                     </button>
                 </div>
             </div>
-            <p class="text-sm text-gray-500">Aquí puedes ver el historial de documentos Excel subidos. Si deseas quitar uno o actualizarlo, puedes eliminarlo individualmente.</p>
+            <p class="text-xs text-slate-500">Listado de los documentos cargados. Si necesitas actualizar un archivo o eliminar uno erróneo, haz clic en eliminar para depurar el buscador.</p>
             
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse text-sm">
-                    <thead class="bg-gray-100 text-gray-700 uppercase text-xs">
+            <div class="overflow-x-auto rounded-lg border border-slate-100">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead class="bg-slate-50 text-slate-700 uppercase font-semibold">
                         <tr>
-                            <th class="p-3 border-b">Nombre del Archivo</th>
+                            <th class="p-3 border-b">Nombre del Archivo Excel</th>
                             <th class="p-3 border-b">Fecha de Carga</th>
                             <th class="p-3 border-b">Registros Aportados</th>
                             <th class="p-3 border-b text-center">Acciones</th>
                         </tr>
                     </thead>
-                    <tbody id="tablaArchivosAdmin" class="divide-y divide-gray-100 text-gray-600">
-                        <!-- Se llena dinámicamente -->
+                    <tbody id="tablaArchivosAdmin" class="divide-y divide-slate-100 text-slate-600 bg-white">
+                        <!-- Dinámico -->
                     </tbody>
                 </table>
             </div>
         </div>
 
-        <!-- Buscador y Contador -->
-        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div class="w-full sm:w-96 relative">
-                <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <!-- Barra de Búsqueda y Filtros -->
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="w-full md:w-96 relative">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                 </span>
-                <input type="text" id="buscador" placeholder="Buscar por Razón Social, Caja, Serie..." 
-                    class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                <input type="text" id="buscador" placeholder="Búsqueda rápida por Razón Social, Caja, Serie..." 
+                    class="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mimp-600 text-xs shadow-inner">
             </div>
-            <div class="text-sm text-gray-500 font-medium" id="contadorResultados">
-                Mostrando 0 registros
+            <div class="text-xs font-semibold text-slate-600 bg-slate-50 px-4 py-2 rounded-lg border border-slate-200" id="contadorResultados">
+                Cargando base de datos...
             </div>
         </div>
 
-        <!-- Tabla Principal de Resultados con Encabezados Fijos -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div class="overflow-x-auto max-h-[600px]">
+        <!-- Tabla de Matriz Documental con Encabezados Fijos -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+            <div class="overflow-x-auto max-h-[600px] relative">
                 <table class="w-full text-left border-collapse" id="tablaMatriz">
-                    <thead class="bg-gray-100 text-gray-700 text-xs uppercase font-semibold sticky top-0 z-10" id="tablaEncabezado">
-                        <!-- 16 columnas fijas -->
+                    <thead class="bg-slate-800 text-white text-[11px] uppercase tracking-wider font-semibold sticky top-0 z-10 shadow" id="tablaEncabezado">
+                        <!-- 16 columnas institucionales -->
                     </thead>
-                    <tbody class="divide-y divide-gray-100 text-sm text-gray-600" id="tablaCuerpo">
+                    <tbody class="divide-y divide-slate-100 text-xs text-slate-700 bg-white" id="tablaCuerpo">
                         <tr>
-                            <td colspan="17" class="text-center py-12 text-gray-400">
-                                No hay registros cargados. Sube un archivo Excel para comenzar.
+                            <td colspan="17" class="text-center py-16 text-slate-400">
+                                <div class="flex flex-col items-center justify-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-slate-300 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    <span>No hay registros en el sistema. Utiliza el botón superior para cargar tus archivos Excel.</span>
+                                </div>
                             </td>
                         </tr>
                     </tbody>
@@ -105,10 +139,15 @@
             </div>
         </div>
 
-    </div>
+    </main>
 
+    <!-- Pie de página institucional -->
+    <footer class="bg-white border-t border-slate-200 py-3 text-center text-[11px] text-slate-500">
+        Ministerio de la Mujer y Poblaciones Vulnerables (MIMP) — Sistema de Gestión Documental y Archivo Central
+    </footer>
+
+    <!-- Lógica JavaScript optimizada para rendimiento fluido y carga múltiple -->
     <script>
-        // Tus 16 columnas fijas institucionales + Archivo Origen
         const encabezadosFijos = [
             "N° CAJA (CÓDIGO)", "Nº DE PAQUETE", "N° DE REGISTRO ARCHIVÍSTICO", "TOMO", 
             "RANGO INICIAL", "RANGO FINAL", "N° FOLIOS", "SERIE DOCUMENTAL", 
@@ -130,7 +169,7 @@
             let trHead = document.createElement('tr');
             encabezadosFijos.forEach(col => {
                 let th = document.createElement('th');
-                th.className = "px-3 py-3 border-b border-gray-200 whitespace-nowrap text-xs";
+                th.className = "px-3 py-3 border-r border-slate-700 whitespace-nowrap text-[11px]";
                 th.innerText = col;
                 trHead.appendChild(th);
             });
@@ -143,31 +182,34 @@
         }
 
         function cargarDatosGuardados() {
-            const datosGuardados = localStorage.getItem('matriz_datos');
-            const archivosGuardados = localStorage.getItem('matriz_archivos');
+            try {
+                const datosGuardados = localStorage.getItem('mimp_matriz_datos');
+                const archivosGuardados = localStorage.getItem('mimp_matriz_archivos');
 
-            if (datosGuardados) {
-                try { datosGlobales = JSON.parse(datosGuardados); } catch (e) { datosGlobales = []; }
+                if (datosGuardados) datosGlobales = JSON.parse(datosGuardados);
+                if (archivosGuardados) historialArchivos = JSON.parse(archivosGuardados);
+            } catch (e) {
+                datosGlobales = [];
+                historialArchivos = [];
             }
-            if (archivosGuardados) {
-                try { historialArchivos = JSON.parse(archivosGuardados); } catch (e) { historialArchivos = []; }
-            }
-
             renderizarTabla(datosGlobales);
             renderizarPanelAdmin();
         }
 
         function sincronizarMemoria() {
-            localStorage.setItem('matriz_datos', JSON.stringify(datosGlobales));
-            localStorage.setItem('matriz_archivos', JSON.stringify(historialArchivos));
+            try {
+                localStorage.setItem('mimp_matriz_datos', JSON.stringify(datosGlobales));
+                localStorage.setItem('mimp_matriz_archivos', JSON.stringify(historialArchivos));
+            } catch (e) {
+                alert("Advertencia: El almacenamiento local del navegador está lleno o restringido.");
+            }
             renderizarPanelAdmin();
         }
 
-        // Botón de emergencia para restablecer por completo si hubo un error previo
         function limpiarTodoSistema() {
             if (confirm("¿Estás seguro de restablecer todo el sistema y borrar los datos almacenados?")) {
-                localStorage.removeItem('matriz_datos');
-                localStorage.removeItem('matriz_archivos');
+                localStorage.removeItem('mimp_matriz_datos');
+                localStorage.removeItem('mimp_matriz_archivos');
                 datosGlobales = [];
                 historialArchivos = [];
                 renderizarTabla(datosGlobales);
@@ -176,37 +218,41 @@
             }
         }
 
+        // Carga múltiple optimizada y fluida en paralelo
         document.getElementById('inputFiles').addEventListener('change', async function(e) {
-            const archivos = e.target.files;
+            const archivos = Array.from(e.target.files);
             if (archivos.length === 0) return;
+
+            // Indicador visual de carga
+            const contadorDiv = document.getElementById('contadorResultados');
+            contadorDiv.innerHTML = `<span class="text-mimp-600 font-bold animate-pulse">Procesando y consolidando archivos...</span>`;
+
+            let promesasLectura = archivos.map(archivo => leerArchivoExcel(archivo));
+            let resultadosTotales = await Promise.all(promesasLectura);
 
             let archivosProcesadosCount = 0;
 
-            for (let i = 0; i < archivos.length; i++) {
-                let archivo = archivos[i];
-                
-                // Si el archivo ya existía, lo purgamos automáticamente para actualizarlo sin bloqueos
-                historialArchivos = historialArchivos.filter(f => f.nombre !== archivo.name);
-                datosGlobales = datosGlobales.filter(fila => fila[16] !== archivo.name);
+            resultadosTotales.forEach((res) => {
+                if (res && res.registros.length > 0) {
+                    // Si el archivo ya existía, purgamos su versión anterior para actualizarlo limpiamente
+                    historialArchivos = historialArchivos.filter(f => f.nombre !== res.nombre);
+                    datosGlobales = datosGlobales.filter(fila => fila[16] !== res.nombre);
 
-                let registrosArchivo = await leerArchivoExcel(archivo);
-                
-                if (registrosArchivo.length > 0) {
                     historialArchivos.push({
-                        nombre: archivo.name,
+                        nombre: res.nombre,
                         fecha: new Date().toLocaleDateString() + " " + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-                        cantidad: registrosArchivo.length
+                        cantidad: res.registros.length
                     });
 
-                    datosGlobales = [...datosGlobales, ...registrosArchivo];
+                    datosGlobales = [...datosGlobales, ...res.registros];
                     archivosProcesadosCount++;
                 }
-            }
+            });
 
             sincronizarMemoria();
             renderizarTabla(datosGlobales);
             e.target.value = ''; 
-            alert(`¡Carga exitosa! Se procesaron ${archivosProcesadosCount} archivo(s). Registros totales: ${datosGlobales.length}.`);
+            alert(`¡Proceso exitoso! Se incorporaron ${archivosProcesadosCount} archivo(s). Total registros en sistema: ${datosGlobales.length}.`);
         });
 
         function leerArchivoExcel(archivo) {
@@ -222,7 +268,7 @@
                             const worksheet = workbook.Sheets[nombrePestaña];
                             const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
-                            // Omitir cabecera (i = 1)
+                            // Omitimos la primera fila (cabecera) y leemos desde i = 1
                             for (let i = 1; i < json.length; i++) {
                                 let fila = json[i];
                                 if (fila && fila.some(celda => celda !== "")) {
@@ -230,28 +276,28 @@
                                     for (let c = 0; c < 16; c++) {
                                         filaAjustada.push(fila[c] !== undefined ? fila[c] : "");
                                     }
-                                    filaAjustada.push(archivo.name); // Origen
+                                    filaAjustada.push(archivo.name); // Archivo de origen
                                     resultadosParciales.push(filaAjustada);
                                 }
                             }
                         });
                     } catch (err) {
-                        console.error("Error al leer el archivo", err);
+                        console.error("Error leyendo archivo", err);
                     }
-                    resolve(resultadosParciales);
+                    resolve({ nombre: archivo.name, registros: resultadosParciales });
                 };
                 reader.readAsArrayBuffer(archivo);
             });
         }
 
         function eliminarArchivo(nombreArchivo) {
-            if (confirm(`¿Estás seguro de eliminar el archivo "${nombreArchivo}"? Se borrarán sus registros del buscador.`)) {
+            if (confirm(`¿Estás seguro de eliminar el archivo "${nombreArchivo}"? Se depurarán sus registros de la matriz.`)) {
                 historialArchivos = historialArchivos.filter(f => f.nombre !== nombreArchivo);
                 datosGlobales = datosGlobales.filter(fila => fila[16] !== nombreArchivo);
 
                 sincronizarMemoria();
                 renderizarTabla(datosGlobales);
-                alert("Archivo eliminado correctamente.");
+                alert("Archivo eliminado y matriz actualizada.");
             }
         }
 
@@ -261,22 +307,32 @@
             tbody.innerHTML = '';
 
             if (datos.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="17" class="text-center py-12 text-gray-400">No hay registros en el sistema. Sube un archivo Excel para comenzar.</td></tr>`;
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="17" class="text-center py-16 text-slate-400">
+                            <div class="flex flex-col items-center justify-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                                </svg>
+                                <span>No hay registros disponibles. Sube tus planillas Excel para comenzar.</span>
+                            </div>
+                        </td>
+                    </tr>`;
                 contador.innerText = "Mostrando 0 registros";
                 return;
             }
 
             let fragmento = document.createDocumentFragment();
-            // Mostramos los primeros 500 registros para mantener la velocidad ultra rápida del navegador
-            let datosMostrar = datos.slice(0, 500);
+            // Lote inicial de 300 filas para renderizado instantáneo y fluido
+            let datosMostrar = datos.slice(0, 300);
 
-            datosMostrar.forEach(fila => {
+            datosMostrar.forEach((fila, idx) => {
                 let tr = document.createElement('tr');
-                tr.className = "hover:bg-gray-50 transition border-b border-gray-100";
+                tr.className = idx % 2 === 0 ? "bg-white hover:bg-mimp-50/50 transition" : "bg-slate-50/60 hover:bg-mimp-50/50 transition";
                 
                 for (let j = 0; j < encabezadosFijos.length; j++) {
                     let td = document.createElement('td');
-                    td.className = "px-3 py-2 whitespace-nowrap text-xs text-gray-700";
+                    td.className = "px-3 py-2.5 border-b border-slate-100 whitespace-nowrap text-[11px] text-slate-700";
                     td.innerText = fila[j] !== undefined ? fila[j] : "";
                     tr.appendChild(td);
                 }
@@ -284,8 +340,9 @@
             });
 
             tbody.appendChild(fragmento);
-            if (datos.length > 500) {
-                contador.innerText = `Mostrando 500 de ${datos.length} registros (Usa el buscador para filtrar)`;
+            
+            if (datos.length > 300) {
+                contador.innerText = `Mostrando 300 de ${datos.length} registros (Usa el buscador para filtrar con precisión)`;
             } else {
                 contador.innerText = `Mostrando ${datos.length} registros en total`;
             }
@@ -296,23 +353,23 @@
             const contadorAdmin = document.getElementById('contadorArchivosAdmin');
             tbodyAdmin.innerHTML = '';
 
-            contadorAdmin.innerText = `${historialArchivos.length} archivos en sistema`;
+            contadorAdmin.innerText = `${historialArchivos.length} archivos activos`;
 
             if (historialArchivos.length === 0) {
-                tbodyAdmin.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-gray-400">No se ha cargado ningún archivo todavía.</td></tr>`;
+                tbodyAdmin.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-slate-400">No se ha cargado ningún archivo en el repositorio todavía.</td></tr>`;
                 return;
             }
 
             historialArchivos.forEach(archivo => {
                 let tr = document.createElement('tr');
-                tr.className = "hover:bg-gray-50";
+                tr.className = "hover:bg-slate-50";
                 tr.innerHTML = `
-                    <td class="p-3 font-medium text-gray-800">${archivo.nombre}</td>
-                    <td class="p-3 text-gray-500 text-xs">${archivo.fecha}</td>
-                    <td class="p-3"><span class="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">${archivo.cantidad} filas</span></td>
+                    <td class="p-3 font-semibold text-slate-800">${archivo.nombre}</td>
+                    <td class="p-3 text-slate-500">${archivo.fecha}</td>
+                    <td class="p-3"><span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-medium">${archivo.cantidad} filas</span></td>
                     <td class="p-3 text-center">
-                        <button onclick="eliminarArchivo('${archivo.nombre}')" class="bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1.5 rounded text-xs font-medium transition">
-                            Eliminar archivo
+                        <button onclick="eliminarArchivo('${archivo.nombre}')" class="bg-rose-50 hover:bg-rose-100 text-rose-700 px-3 py-1 rounded text-xs font-semibold transition border border-rose-200">
+                            Eliminar
                         </button>
                     </td>
                 `;
@@ -320,10 +377,11 @@
             });
         }
 
+        // Búsqueda en tiempo real altamente optimizada
         document.getElementById('buscador').addEventListener('input', function(e) {
-            const textoBusqueda = e.target.value.toLowerCase();
+            const textoBusqueda = e.target.value.toLowerCase().trim();
             
-            if (textoBusqueda.trim() === "") {
+            if (textoBusqueda === "") {
                 renderizarTabla(datosGlobales);
                 return;
             }
@@ -337,19 +395,19 @@
             tbody.innerHTML = '';
 
             if (datosFiltrados.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="17" class="text-center py-12 text-gray-400">No hay coincidencias con la búsqueda.</td></tr>`;
-                contador.innerText = "Mostrando 0 registros";
+                tbody.innerHTML = `<tr><td colspan="17" class="text-center py-16 text-slate-400">No se encontraron coincidencias para "${textoBusqueda}".</td></tr>`;
+                contador.innerText = "Mostrando 0 resultados";
                 return;
             }
 
             let fragmento = document.createDocumentFragment();
-            datosFiltrados.slice(0, 300).forEach(fila => {
+            datosFiltrados.slice(0, 300).forEach((fila, idx) => {
                 let tr = document.createElement('tr');
-                tr.className = "hover:bg-gray-50 transition border-b border-gray-100";
+                tr.className = idx % 2 === 0 ? "bg-white hover:bg-mimp-50/50 transition" : "bg-slate-50/60 hover:bg-mimp-50/50 transition";
                 
                 for (let j = 0; j < encabezadosFijos.length; j++) {
                     let td = document.createElement('td');
-                    td.className = "px-3 py-2 whitespace-nowrap text-xs text-gray-700";
+                    td.className = "px-3 py-2.5 border-b border-slate-100 whitespace-nowrap text-[11px] text-slate-700";
                     td.innerText = fila[j] !== undefined ? fila[j] : "";
                     tr.appendChild(td);
                 }
